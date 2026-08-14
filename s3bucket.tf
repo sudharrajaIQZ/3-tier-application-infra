@@ -12,7 +12,7 @@ terraform {
 // Creating bucket for my application tiers and vpc tier
 resource "aws_s3_bucket" "app_tier" {
   bucket           = local.s3_app_tier_bucket_credentials.name
-  bucket_namespace = "account-regional"
+#   bucket_namespace = "account-regional"
 
   // global custom tags
   tags = local.global_tags
