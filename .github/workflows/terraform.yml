@@ -12,14 +12,13 @@ on:
       environment:
         description: "Select the environment to deploy"
         required: true
-        default: "Dev"
+        default: "dev"
         type: choice
         options:
-          - Dev
-          - Stage
+          - dev
+          - stage
           - master
-          - Destroy
-
+          - destroy
 
 jobs:
   terraform_pipeline:
@@ -28,8 +27,7 @@ jobs:
     # environment: ${{ github.event.inputs.deploy_env }}
     # if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
 
-    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == Dev && 'dev' || github.ref_name == Stage && 'stage' || github.ref_name == Destroy && 'destroy' || 'master')}}
-
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == 'dev' && 'dev' || github.ref_name == 'stage' && 'stage' || github.ref_name == 'destroy' && 'destroy' || 'master') }}
 
     # Declaring credentials here makes them available to ALL steps automatically
     env:
@@ -48,16 +46,16 @@ jobs:
 
       - name: Terraform Initialize
         run: |
-          terraform init -input=false -backend-config="key=${{ toLower(github.event.inputs.deploy_env) }}/terraform.tfstate" -reconfigure -upgrade
+          terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -var="environment=${{ toLower(github.event.inputs.deploy_env) }}"
+        run: terraform plan -var="environment=${{ github.event.inputs.environment }}"
 
       - name: Terraform Apply
-        run: terraform apply --auto-approve -var="environment=${{ toLower(github.event.inputs.deploy_env) }}"
+        run: terraform apply --auto-approve -var="environment=${{ github.event.inputs.environment }}"
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }} # Kept here as it's only needed for git pulls
 
@@ -65,7 +63,7 @@ jobs:
     name: "Terraform Destroy"
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/destroy' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'destroy')
-    environment: ${{ github.event.inputs.deploy_env }}
+    environment: ${{ github.event.inputs.environment }}
 
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -83,9 +81,9 @@ jobs:
 
       - name: Terraform Initialize for Destroy
         run: |
-          terraform init -input=false -backend-config="key=${{ toLower(github.event.inputs.deploy_env) }}/terraform.tfstate" -reconfigure -upgrade
+          terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
 
       - name: Terraform Destroy
-        run: terraform destroy --auto-approve -var="environment=${{ toLower(github.event.inputs.deploy_env) }}"
+        run: terraform destroy --auto-approve -var="environment=${{ github.event.inputs.environment }}"
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
