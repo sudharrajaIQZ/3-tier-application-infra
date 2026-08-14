@@ -93,7 +93,7 @@ jobs:
 
       - name: Terraform Initialize for Destroy
         run: |
-          terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
+          terraform init -upgrade
 
       - name: Wait before destroy
         run: |
@@ -101,6 +101,6 @@ jobs:
           sleep 120
 
       - name: Terraform Destroy
-        run: terraform destroy --auto-approve -var="environment=${{ github.event.inputs.environment }}"
+        run: terraform destroy --auto-approve
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
