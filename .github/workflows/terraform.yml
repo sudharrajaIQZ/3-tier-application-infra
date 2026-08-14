@@ -65,7 +65,7 @@ jobs:
   terraform_pipeline_destroy:
     name: "Terraform Destroy"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/destroy' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'destroy')
+    if: github.ref == 'refs/heads/destroy' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'destroy')
     environment: ${{ github.event.inputs.environment }}
 
     env:
@@ -85,6 +85,11 @@ jobs:
       - name: Terraform Initialize for Destroy
         run: |
           terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
+
+      - name: Wait before destroy
+        run: |
+          echo "Waiting 2 minutes before running destroy..."
+          sleep 120
 
       - name: Terraform Destroy
         run: terraform destroy --auto-approve -var="environment=${{ github.event.inputs.environment }}"
