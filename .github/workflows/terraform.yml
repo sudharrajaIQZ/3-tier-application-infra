@@ -1,121 +1,124 @@
 name: "three tier terraform infra setup"
 
 on:
-  push:
-    branches:
-      - Dev
-      - Stage
-      - master
+    push:
+        branches:
+            - Dev
+            - Stage
+            - master
 
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Select the environment to deploy"
-        default: "Development"
-        required: true
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "Select the environment to deploy"
+                default: "Development"
+                required: true
 
-      operations:
-        description: "Select the operations to run"
-        required: true
-        default: "apply"
-        type: choice
-        options:
-          - apply
-          - destroy
+            operations:
+                description: "Select the operations to run"
+                required: true
+                default: "apply"
+                type: choice
+                options:
+                    - apply
+                    - destroy
 
 jobs:
-  terraform_build:
-    name: "Terraform build for ${{ github.ref.heads }} environment"
-    runs-on: ubuntu-latest
+    terraform_build:
+        name: "Terraform build for ${{ github.ref.heads }} environment"
+        runs-on: ubuntu-latest
 
-    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == 'Development' && 'Development' || github.ref_name == 'stage' && 'stage' || github.ref_name == 'destroy' && 'destroy' || 'master') }}
+        environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == 'Development' && 'Development' || github.ref_name == 'stage' && 'stage' || github.ref_name == 'destroy' && 'destroy' || 'master') }}
 
-    if: |
-      (github.event_name == 'push' && contains(fromJson( '["master","Dev","Stage"]'), github.ref_name)) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'Development' && github.event.inputs.operations == 'apply')
+        if: |
+            (github.event_name == 'push' && contains(fromJson( '["master","Dev","Stage"]'), github.ref_name)) ||
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'Development' && github.event.inputs.operations == 'apply')
 
-    env:
-      GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
+        env:
+            GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: ${{ secrets.AWS_REGION }}
 
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v4
+        steps:
+            - name: checkout code
+              uses: actions/checkout@v4
 
-      - name: Install and Setup terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: 1.15.8
+            - name: Install and Setup terraform
+              uses: hashicorp/setup-terraform@v4
+              with:
+                  terraform_version: 1.15.8
 
-      - name: Ensure AWS_REGION is set
-        run: |
-          if [ -z "$AWS_REGION" ]; then
-            echo "ERROR: AWS_REGION is not set. Set repository secret 'AWS_REGION'.";
-            exit 1;
-          fi
+            - name: Ensure AWS_REGION is set
+              run: |
+                  if [ -z "$AWS_REGION" ]; then
+                    echo "ERROR: AWS_REGION is not set. Set repository secret 'AWS_REGION'.";
+                    exit 1;
+                  fi
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Ensure AWS_REGION is set
-        run: |
-          if [ -z "$AWS_REGION" ]; then
-            echo "ERROR: AWS_REGION is not set. Set repository secret 'AWS_REGION'.";
-            exit 1;
-          fi
+            - name: Verify AWS credentials
+              run: |
+                  echo "AWS_REGION=$AWS_REGION"
+                  aws sts get-caller-identity
 
-      - name: Verify AWS credentials
-        run: |
-          echo "AWS_REGION=$AWS_REGION"
-          aws sts get-caller-identity
+            - name: Terraform Initialize
+              run: terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
 
-      - name: Terraform Initialize
-        # run: terraform init -upgrade
-        run: terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
+            - name: Terraform Validate
+              run: terraform validate
 
-      - name: Terraform Validate
-        run: terraform validate
+            - name: Terraform Plan
+              run: terraform plan -out=tfplan
 
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
+            - name: Terraform Apply
+              run: terraform apply 'tfplan' --auto-approve
 
-      - name: Terraform Apply
-        run: terraform apply 'tfplan' --auto-approve
-        # env:
-        #   GITHUB_ACCESS_TOKEN: ${{ secrets.terraform_GITHUB_TOKEN }}
-        #   AWS_ACCESS_PROFILE: ${{ secrets.AWS_PROFILE_NAME }}
-        #   AWS_ACCESS_REGION: ${{ secrets.AWS_REGION }}
-        #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #   AWS_ACCESS_SECRET_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+    terraform_destroy:
+        name: "Terraform destroy for ${{github.ref.heads}} environment"
+        runs-on: ubuntu-latest
 
-  terraform_destroy:
-    name: "Terraform destroy for ${{github.ref.heads}} environment"
-    runs-on: ubuntu-latest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/Stage' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'Development' && github.event.inputs.operations == 'destroy')
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/Stage' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'Development' && github.event.inputs.operations == 'destroy')
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: ${{ secrets.AWS_REGION }}
 
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v4
+        steps:
+            - name: checkout code
+              uses: actions/checkout@v4
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v4
+            - name: Install Terraform
+              uses: hashicorp/setup-terraform@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+            - name: Ensure AWS_REGION is set
+              run: |
+                  if [ -z "$AWS_REGION" ]; then
+                    echo "ERROR: AWS_REGION is not set. Set repository secret 'AWS_REGION'.";
+                    exit 1;
+                  fi
 
-      - name: Terraform Initialize
-        run: terraform init -upgrade
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform Destroy
-        run: terraform destroy --auto-approve
+            - name: Verify AWS credentials
+              run: |
+                  echo "AWS_REGION=$AWS_REGION"
+                  aws sts get-caller-identity
+
+            - name: Terraform Initialize
+              run: terraform init -upgrade
+
+            - name: Terraform Destroy
+              run: terraform destroy --auto-approve
