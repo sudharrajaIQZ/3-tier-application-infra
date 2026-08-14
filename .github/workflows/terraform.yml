@@ -1,5 +1,9 @@
 name: "Terraform 3 tier infra"
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true # Silences Node 20 warning logs
+
+
 on:
   push:
     branches:
