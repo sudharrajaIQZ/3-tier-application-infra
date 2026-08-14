@@ -52,7 +52,7 @@ jobs:
         run: alias tf=terraform
 
       - name: Terraform Initialize
-        run: tf init -upgrade -backend-config="key=${{github.event.inputs.environment}}/terraform.tfstate"
+        run: tf init -backend-config="key=${{github.event.inputs.environment}}/terraform.tfstate" -upgrade
 
       - name: Terraform Validate
         run: tf validate
