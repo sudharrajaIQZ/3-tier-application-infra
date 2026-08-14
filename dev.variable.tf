@@ -28,13 +28,11 @@ variable "s3_bucket_config" {
     alias  = string
     name   = string
     key    = string
-    region = string
   })
   default = {
-    alias  = ""
-    key    = ""
-    name   = ""
-    region = ""
+    alias = ""
+    key   = ""
+    name  = ""
   }
 
 }
@@ -46,9 +44,9 @@ variable "dev_tags" {
     name        = string
     environment = string
   })
-default = {
-  Name = ""
-  name = ""
-  environment = ""
-}
+  default = {
+    Name        = ""
+    name        = ""
+    environment = ""
+  }
 }
