@@ -13,6 +13,7 @@ jobs:
   terraform_pipeline:
     name: "Execute Terraform Build"
     runs-on: ubuntu-latest
+    environment: Development
 
     # Declaring credentials here makes them available to ALL steps automatically
     env:
@@ -61,6 +62,7 @@ jobs:
     name: "Terraform Destroy"
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/destroy' || github.event_name == 'workflow_dispatch'
+    environment: Development
 
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
