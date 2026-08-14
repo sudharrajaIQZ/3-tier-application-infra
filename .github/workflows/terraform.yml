@@ -35,6 +35,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      - name: Install AWS CLI (for verification)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y awscli
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
       - name: Terraform Initialize
         run: terraform init
 
@@ -74,7 +82,20 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Install AWS CLI (for verification) - destroy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y awscli
+
+      - name: Verify AWS credentials - destroy
+        run: aws sts get-caller-identity
+
       - name: Terraform Destroy
         run: terraform destroy --auto-approve
         env:
