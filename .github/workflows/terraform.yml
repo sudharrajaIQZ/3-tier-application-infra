@@ -23,18 +23,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Install and Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.15.8
-
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
 
       - name: Install AWS CLI (for verification)
         run: |
@@ -71,7 +65,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Install and Setup terraform
         uses: hashicorp/setup-terraform@v4
@@ -80,23 +74,6 @@ jobs:
 
       - name: Terraform Initialize for Destroy
         run: terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-
-      - name: Install AWS CLI (for verification) - destroy
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y awscli
-
-      - name: Verify AWS credentials - destroy
-        run: aws sts get-caller-identity
 
       - name: Terraform Destroy
         run: terraform destroy --auto-approve
