@@ -53,10 +53,10 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -var="environment=${{ github.event.inputs.environment }}"
+        run: terraform plan"
 
       - name: Terraform Apply
-        run: terraform apply --auto-approve -var="environment=${{ github.event.inputs.environment }}"
+        run: terraform apply --auto-approve "
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }} # Kept here as it's only needed for git pulls
 
