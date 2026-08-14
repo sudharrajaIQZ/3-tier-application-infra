@@ -6,24 +6,30 @@ env:
 on:
   push:
     branches:
-      - master
+      - /*
   workflow_dispatch:
     inputs:
-      operation:
-        description: "Operation to run: apply or destroy"
+      environment:
+        description: "Select the environment to deploy"
         required: true
-        default: "apply"
-      deploy_env:
-        description: "Deployment environment to target (Production, UAT, Development)"
-        required: true
-        default: "Development"
+        default: "Dev"
+        type: choice
+        options:
+          - Dev
+          - Stage
+          - master
+          - Destroy
+
 
 jobs:
   terraform_pipeline:
     name: "Execute Terraform Build"
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.deploy_env }}
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
+    # environment: ${{ github.event.inputs.deploy_env }}
+    # if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
+
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == Dev && 'dev' || github.ref_name == Stage && 'stage' || github.ref_name == Destroy && 'destroy' || 'master')}}
+
 
     # Declaring credentials here makes them available to ALL steps automatically
     env:
