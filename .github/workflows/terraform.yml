@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: action/Checkout@v4
+        uses: actions/Checkout@v4
 
       - name: Install and Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -46,7 +46,7 @@ jobs:
     if: github.ref == 'refs/head/destroy' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout Source Code for destroy
-        uses: action/Checkout@v4
+        uses: actions/Checkout@v4
 
       - name: Install and Setup terraform
         uses: hashicorp/setup-terraform@v3
