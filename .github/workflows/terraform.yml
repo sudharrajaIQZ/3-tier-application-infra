@@ -12,10 +12,10 @@ on:
       environment:
         description: "Select the environment to deploy"
         required: true
-        default: "dev"
+        default: "Development"
         type: choice
         options:
-          - dev
+          - Development
           - stage
           - master
           - destroy
@@ -27,7 +27,7 @@ jobs:
     # environment: ${{ github.event.inputs.deploy_env }}
     # if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
 
-    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == 'dev' && 'dev' || github.ref_name == 'stage' && 'stage' || github.ref_name == 'destroy' && 'destroy' || 'master') }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.ref_name == 'Development' && 'Development' || github.ref_name == 'stage' && 'stage' || github.ref_name == 'destroy' && 'destroy' || 'master') }}
 
     # Declaring credentials here makes them available to ALL steps automatically
     env:
