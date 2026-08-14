@@ -12,8 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # - name: Checkout Code
+      #   uses: actions/Checkout@v4
       - name: Checkout Code
-        uses: actions/Checkout@v4
+      # This commit hash corresponds to the Node 24 compliant v4 release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install and Setup Terraform
         uses: hashicorp/setup-terraform@v4
@@ -45,8 +48,12 @@ jobs:
     # check which branch is running
     if: github.ref == 'refs/head/destroy' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Checkout Source Code for destroy
-        uses: actions/Checkout@v4
+      # - name: Checkout Source Code for destroy
+      #   uses: actions/Checkout@v4
+      - name: Checkout Code
+        # This commit hash corresponds to the Node 24 compliant v4 release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
 
       - name: Install and Setup terraform
         uses: hashicorp/setup-terraform@v4
