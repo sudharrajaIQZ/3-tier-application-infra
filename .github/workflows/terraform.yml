@@ -19,11 +19,20 @@ on:
           - stage
           - master
           - destroy
+      operation:
+        description: "Select the operation to run"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
   terraform_pipeline:
     name: "Execute Terraform Build"
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
     # environment: ${{ github.event.inputs.deploy_env }}
     # if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'apply')
 
@@ -65,7 +74,7 @@ jobs:
   terraform_pipeline_destroy:
     name: "Terraform Destroy"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/destroy' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'destroy')
+    if: github.ref == 'refs/heads/destroy' || (github.event_name == 'workflow_dispatch' && github.event.inputs.operation == 'destroy')
     environment: ${{ github.event.inputs.environment }}
 
     env:
