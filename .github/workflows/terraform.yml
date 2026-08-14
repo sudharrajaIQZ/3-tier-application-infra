@@ -30,14 +30,6 @@ jobs:
         with:
           terraform_version: 1.15.8
 
-      - name: Install AWS CLI (for verification)
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y awscli
-
-      - name: Verify AWS credentials
-        run: aws sts get-caller-identity
-
       - name: Terraform Initialize
         run: terraform init
 
