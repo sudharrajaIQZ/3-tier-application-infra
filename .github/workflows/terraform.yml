@@ -48,6 +48,9 @@ jobs:
         with:
           terraform_version: 1.15.8
 
+      - name: verify aws credentials
+        run: aws sts get-caller-identity
+
       - name: Terraform Initialize
         run: terraform init -upgrade
 
@@ -78,6 +81,13 @@ jobs:
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Initialize
         run: terraform init -upgrade
