@@ -1,8 +1,7 @@
 name: "Terraform 3 tier infra"
 
 env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true # Silences Node 20 warning logs
-
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true # Silences Node 20 runtime alerts globally
 
 on:
   push:
@@ -15,11 +14,14 @@ jobs:
     name: "Execute Terraform Build"
     runs-on: ubuntu-latest
 
+    # Declaring credentials here makes them available to ALL steps automatically
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
     steps:
-      # - name: Checkout Code
-      #   uses: actions/Checkout@v4
       - name: Checkout Code
-      # This commit hash corresponds to the Node 24 compliant v4 release
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install and Setup Terraform
@@ -28,46 +30,42 @@ jobs:
           terraform_version: 1.15.8
 
       - name: Terraform Initialize
-        run: terraform Init
-        env:
-          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          AWS_REGION: ${{secrets.AWS_REGION}}
+        run: terraform init
 
-      - name: Terraform validate
+      - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform plan
-        run: terraform plan --auto-approve
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply --auto-approve
         env:
-          GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          AWS_REGION: ${{secrets.AWS_REGION}}
+          GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }} # Kept here as it's only needed for git pulls
 
   terraform_pipeline_destroy:
-    name: Terraform destroy
+    name: "Terraform Destroy"
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/destroy' || github.event_name == 'workflow_dispatch'
 
-    # check which branch is running
-    if: github.ref == 'refs/head/destroy' || github.event_name == 'workflow_dispatch'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
     steps:
-      # - name: Checkout Source Code for destroy
-      #   uses: actions/Checkout@v4
       - name: Checkout Code
-        # This commit hash corresponds to the Node 24 compliant v4 release
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
 
       - name: Install and Setup terraform
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.15.8
 
-      - name: Terraform destroy
+      - name: Terraform Initialize for Destroy
+        run: terraform init
+
+      - name: Terraform Destroy
         run: terraform destroy --auto-approve
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          AWS_REGION: ${{secrets.AWS_REGION}}
