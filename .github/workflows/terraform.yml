@@ -93,7 +93,7 @@ jobs:
 
       - name: Terraform Initialize for Destroy
         run: |
-          terraform init -upgrade
+          terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
 
       - name: Wait before destroy
         run: |
