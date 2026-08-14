@@ -95,10 +95,10 @@ jobs:
         run: |
           terraform init -input=false -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" -reconfigure -upgrade
 
-      - name: Wait before destroy
-        run: |
-          echo "Waiting 2 minutes before running destroy..."
-          sleep 120
+      # - name: Wait before destroy
+      #   run: |
+      #     echo "Waiting 2 minutes before running destroy..."
+      #     sleep 120
 
       - name: Terraform Destroy
         run: terraform destroy --auto-approve
